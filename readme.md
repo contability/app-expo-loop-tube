@@ -1,0 +1,10 @@
+- react-native-vector-icons
+  - 따로 설치할 필요 없이 @expo/vector-icons 사용
+- react-native-webview
+  - npx expo install react-native-webview
+- static HTML로 유튜브 API 이용
+  - 공식적인 API는 웹용 Youtube IFrame Player API만 제공하고 있음
+  - 이러한 경우 웹뷰를 이용해서 React Native에서 Youtube IFrame API를 사용할 수 있음
+  - https://developers.google.com/youtube/iframe_api_reference
+- React Native TextInput 사용
+- URL의 쿼리 스트링 파싱
