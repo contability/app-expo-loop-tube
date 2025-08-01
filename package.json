@@ -12,6 +12,7 @@
   "dependencies": {
     "expo": "~53.0.20",
     "expo-status-bar": "~2.2.3",
+    "query-string": "^9.2.2",
     "react": "19.0.0",
     "react-native": "0.79.5",
     "react-native-webview": "13.13.5"
