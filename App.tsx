@@ -1,6 +1,6 @@
 import { Alert, Dimensions, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from '@expo/vector-icons/MaterialIcons';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import queryString from 'query-string';
 import WebView from 'react-native-webview';
 
@@ -49,11 +49,26 @@ const styles = StyleSheet.create({
   urlList: {
     color: '#AEAEB2',
   },
+  controller: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 10,
+    marginHorizontal: 16,
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  playButton: {},
 });
 
 const App = () => {
   const [url, setUrl] = useState('');
   const [youtubeId, setYoutubeId] = useState('');
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const webViewRef = useRef<WebView | null>(null);
 
   const onPressOpenLink = () => {
     const {
@@ -63,6 +78,18 @@ const App = () => {
     if (typeof id === 'string') setYoutubeId(id);
     else Alert.alert('잘못된 URL입니다.');
   };
+
+  const onPressPlay = useCallback(() => {
+    if (webViewRef.current !== null) {
+      webViewRef.current?.injectJavaScript('player.playVideo(); true;');
+    }
+  }, []);
+
+  const onPressPause = useCallback(() => {
+    if (webViewRef.current !== null) {
+      webViewRef.current?.injectJavaScript('player.pauseVideo(); true;');
+    }
+  }, []);
 
   const source = useMemo(() => {
     const html = `
@@ -103,7 +130,9 @@ const App = () => {
 
           function onPlayerReady(event) {}
 
-          function onPlayerStateChange(event) {}
+          function onPlayerStateChange(event) {
+            window.ReactNativeWebView.postMessage(event.data); 
+          }
         </script>
       </body>
     </html>`;
@@ -127,7 +156,27 @@ const App = () => {
       </View>
       <View style={styles.youtubeContainer}>
         {youtubeId && (
-          <WebView source={source} allowsInlineMediaPlayback={true} mediaPlaybackRequiresUserAction={false} />
+          <WebView
+            ref={webViewRef}
+            source={source}
+            allowsInlineMediaPlayback={true}
+            mediaPlaybackRequiresUserAction={false}
+            onMessage={event => {
+              console.log(event.nativeEvent.data);
+              setIsPlaying(event.nativeEvent.data === '1');
+            }}
+          />
+        )}
+      </View>
+      <View style={styles.controller}>
+        {isPlaying ? (
+          <TouchableOpacity style={styles.playButton} onPress={onPressPause}>
+            <Icon name="pause-circle" size={41.67} color="#E5E5EA" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.playButton} onPress={onPressPlay}>
+            <Icon name="play-circle" size={39.58} color="#00DDAB" />
+          </TouchableOpacity>
         )}
       </View>
       <View style={styles.urlListContainer}>
