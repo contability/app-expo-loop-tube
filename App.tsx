@@ -1,6 +1,6 @@
 import { Alert, Dimensions, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from '@expo/vector-icons/MaterialIcons';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import queryString from 'query-string';
 import WebView from 'react-native-webview';
 
@@ -60,13 +60,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
   },
-  playButton: {},
+  playButton: {
+    height: 50,
+    width: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timerText: {
+    color: '#AEAEB2',
+    alignSelf: 'flex-end',
+    fontSize: 13,
+    marginTop: 15,
+    marginRight: 20,
+  },
 });
+
+const formatTime = (seconds: number) => {
+  const minuates = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  const formattedMinuate = String(minuates).padStart(2, '0');
+  const formatetdSeconds = String(remainingSeconds).padStart(2, '0');
+
+  return `${formattedMinuate}:${formatetdSeconds}`;
+};
 
 const App = () => {
   const [url, setUrl] = useState('');
   const [youtubeId, setYoutubeId] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
+  const [durationInSec, setDurationInSec] = useState(0);
+  const [currentTimeInSec, setCurrentTimeInSec] = useState(0);
 
   const webViewRef = useRef<WebView | null>(null);
 
@@ -90,6 +114,9 @@ const App = () => {
       webViewRef.current?.injectJavaScript('player.pauseVideo(); true;');
     }
   }, []);
+
+  const durationText = formatTime(Math.floor(durationInSec));
+  const currentTimeText = formatTime(Math.floor(currentTimeInSec));
 
   const source = useMemo(() => {
     const html = `
@@ -128,16 +155,39 @@ const App = () => {
             });
           }
 
-          function onPlayerReady(event) {}
+          function postMessageToRN(type, data){
+            const message = JSON.stringify({
+              type, data
+            });
+
+            window.ReactNativeWebView.postMessage(message); 
+          }
+
+          function onPlayerReady(event) {
+            postMessageToRN('duration', player.getDuration());
+          }
 
           function onPlayerStateChange(event) {
-            window.ReactNativeWebView.postMessage(event.data); 
+            postMessageToRN('player-state', event.data);
           }
         </script>
       </body>
     </html>`;
     return { html };
   }, [youtubeId]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      const id = setInterval(() => {
+        if (webViewRef.current !== null) {
+          webViewRef.current?.injectJavaScript('postMessageToRN("current-time", player.getCurrentTime());');
+        }
+      }, 50);
+      return () => {
+        clearInterval(id);
+      };
+    }
+  }, [isPlaying]);
 
   return (
     <SafeAreaView style={styles.safearea}>
@@ -162,12 +212,30 @@ const App = () => {
             allowsInlineMediaPlayback={true}
             mediaPlaybackRequiresUserAction={false}
             onMessage={event => {
-              console.log(event.nativeEvent.data);
-              setIsPlaying(event.nativeEvent.data === '1');
+              // console.log('🚀 ~ App ~ event:', event.nativeEvent.data);
+              const { type, data } = JSON.parse(event.nativeEvent.data);
+
+              switch (type) {
+                case 'player-state':
+                  setIsPlaying(data === 1);
+                  break;
+                case 'duration':
+                  setDurationInSec(data);
+                  break;
+                case 'current-time':
+                  console.log('here');
+
+                  setCurrentTimeInSec(data);
+                  break;
+
+                default:
+                  break;
+              }
             }}
           />
         )}
       </View>
+      <Text style={styles.timerText}>{`${currentTimeText} / ${durationText}`}</Text>
       <View style={styles.controller}>
         {isPlaying ? (
           <TouchableOpacity style={styles.playButton} onPress={onPressPause}>
