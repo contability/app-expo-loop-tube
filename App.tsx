@@ -1,4 +1,14 @@
-import { Alert, Dimensions, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Animated,
+  Dimensions,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import queryString from 'query-string';
@@ -35,6 +45,15 @@ const styles = StyleSheet.create({
     width: YT_WIDTH,
     height: YT_HEIGHT,
     backgroundColor: '#4A4A4A',
+  },
+  seekBarBackground: {
+    height: 3,
+    backgroundColor: '#D4D4D4',
+  },
+  seekBarProgress: {
+    height: 3,
+    backgroundColor: '#00DDA8',
+    // width: '0%',
   },
   urlListContainer: {
     backgroundColor: '#1A1A1A',
@@ -93,6 +112,7 @@ const App = () => {
   const [currentTimeInSec, setCurrentTimeInSec] = useState(0);
 
   const webViewRef = useRef<WebView | null>(null);
+  const seekBarAnimRef = useRef(new Animated.Value(0));
 
   const onPressOpenLink = () => {
     const {
@@ -189,6 +209,16 @@ const App = () => {
     }
   }, [isPlaying]);
 
+  useEffect(() => {
+    Animated.timing(seekBarAnimRef.current, {
+      // 어떠한 값으로 서서히 변경할건지
+      toValue: currentTimeInSec,
+      duration: 50,
+      // 이게 false가 아니면 seekBarProgress 스타일에 width로 값 전달이 불가능
+      useNativeDriver: false,
+    }).start();
+  }, [currentTimeInSec]);
+
   return (
     <SafeAreaView style={styles.safearea}>
       <View style={styles.inputContainer}>
@@ -223,17 +253,27 @@ const App = () => {
                   setDurationInSec(data);
                   break;
                 case 'current-time':
-                  console.log('here');
-
                   setCurrentTimeInSec(data);
                   break;
-
                 default:
                   break;
               }
             }}
           />
         )}
+      </View>
+      <View style={styles.seekBarBackground}>
+        <Animated.View
+          style={[
+            styles.seekBarProgress,
+            {
+              width: seekBarAnimRef.current.interpolate({
+                inputRange: [0, durationInSec],
+                outputRange: ['0%', '100%'],
+              }),
+            },
+          ]}
+        />
       </View>
       <Text style={styles.timerText}>{`${currentTimeText} / ${durationText}`}</Text>
       <View style={styles.controller}>
