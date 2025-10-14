@@ -2,6 +2,7 @@ import {
   Alert,
   Animated,
   Dimensions,
+  PanResponder,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -49,11 +50,15 @@ const styles = StyleSheet.create({
   seekBarBackground: {
     height: 3,
     backgroundColor: '#D4D4D4',
+    // 터치 이벤트 안받도록 함. thumb 눌렀을 때만 panResponder 사용되도록 하기 위함
+    // box-none은 본인(컨테이너)는 이벤트 안받을건데 자식들은 받게 해주는 속성 값
+    pointerEvents: 'box-none',
   },
   seekBarProgress: {
     height: 3,
     backgroundColor: '#00DDA8',
     // width: '0%',
+    pointerEvents: 'none',
   },
   seekBarThumb: {
     width: 14,
@@ -204,6 +209,28 @@ const App = () => {
     return { html };
   }, [youtubeId]);
 
+  const durationInSecRef = useRef(durationInSec);
+  durationInSecRef.current = durationInSec;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        webViewRef.current?.injectJavaScript('player.pauseVideo(); true;');
+      },
+      onPanResponderMove: (event, gestureState) => {
+        const newTimeInSec = (gestureState.moveX / YT_WIDTH) * durationInSecRef.current;
+        seekBarAnimRef.current.setValue(newTimeInSec);
+      },
+      onPanResponderRelease: (event, gestureState) => {
+        const newTimeInSec = (gestureState.moveX / YT_WIDTH) * durationInSecRef.current;
+        webViewRef.current?.injectJavaScript(`player.seekTo(${newTimeInSec}, true);`);
+        webViewRef.current?.injectJavaScript('player.playVideo(); true;');
+      },
+    }),
+  );
+
   useEffect(() => {
     if (isPlaying) {
       const id = setInterval(() => {
@@ -270,7 +297,8 @@ const App = () => {
           />
         )}
       </View>
-      <View style={styles.seekBarBackground}>
+      {/* SeekBar */}
+      <View style={styles.seekBarBackground} {...panResponder.current.panHandlers}>
         <Animated.View
           style={[
             styles.seekBarProgress,
