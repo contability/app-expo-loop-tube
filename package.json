@@ -7,7 +7,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test:appium": "wdio wdio.conf.js",
+    "test:appium:ios": "wdio wdio.conf.js",
+    "test:appium:android": "wdio wdio.conf.js"
   },
   "dependencies": {
     "expo": "~53.0.23",
@@ -20,12 +23,21 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
+    "@wdio/appium-service": "^9.20.0",
+    "@wdio/cli": "^9.20.0",
+    "@wdio/local-runner": "^9.20.0",
+    "@wdio/mocha-framework": "^9.20.0",
+    "@wdio/spec-reporter": "^9.20.0",
+    "appium": "^3.1.0",
+    "appium-uiautomator2-driver": "^5.0.5",
+    "appium-xcuitest-driver": "^10.2.1",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~9.2.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.3",
     "prettier": "^3.6.2",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "webdriverio": "^9.20.0"
   },
   "private": true,
   "packageManager": "yarn@1.22.22"

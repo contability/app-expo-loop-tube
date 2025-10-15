@@ -35,3 +35,9 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Appium
+logs/
+*.log
+allure-results/
+test-results/

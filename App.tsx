@@ -264,8 +264,15 @@ const App = () => {
           onChangeText={setUrl}
           value={url}
           inputMode="url"
+          accessibilityLabel="URL 입력 필드"
+          testID="url-input"
         />
-        <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} onPress={onPressOpenLink}>
+        <TouchableOpacity
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={onPressOpenLink}
+          accessibilityLabel="링크 추가 버튼"
+          testID="add-link-button"
+        >
           <Icon name="add-link" size={24} color={'#AEAEB2'} />
         </TouchableOpacity>
       </View>
@@ -325,11 +332,21 @@ const App = () => {
       <Text style={styles.timerText}>{`${currentTimeText} / ${durationText}`}</Text>
       <View style={styles.controller}>
         {isPlaying ? (
-          <TouchableOpacity style={styles.playButton} onPress={onPressPause}>
+          <TouchableOpacity
+            style={styles.playButton}
+            onPress={onPressPause}
+            accessibilityLabel="일시정지 버튼"
+            testID="pause-button"
+          >
             <Icon name="pause-circle" size={41.67} color="#E5E5EA" />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.playButton} onPress={onPressPlay}>
+          <TouchableOpacity
+            style={styles.playButton}
+            onPress={onPressPlay}
+            accessibilityLabel="재생 버튼"
+            testID="play-button"
+          >
             <Icon name="play-circle" size={39.58} color="#00DDAB" />
           </TouchableOpacity>
         )}
