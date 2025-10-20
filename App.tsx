@@ -68,6 +68,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: (-14 + 3) / 2,
   },
+  repeat: {
+    width: 14,
+    height: 14,
+    backgroundColor: 'red',
+    borderRadius: 14 / 2,
+    position: 'absolute',
+    top: (-14 + 3) / 2,
+  },
   urlListContainer: {
     backgroundColor: '#1A1A1A',
     borderRadius: 10,
@@ -97,6 +105,7 @@ const styles = StyleSheet.create({
     width: 50,
     alignItems: 'center',
     justifyContent: 'center',
+    marginHorizontal: 54,
   },
   timerText: {
     color: '#AEAEB2',
@@ -123,6 +132,9 @@ const App = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [durationInSec, setDurationInSec] = useState(0);
   const [currentTimeInSec, setCurrentTimeInSec] = useState(0);
+  const [repeatStartInSec, setRepeatStartInSec] = useState<number | null>(null);
+  const [repeatEndInSec, setRepeatEndInSec] = useState<number | null>(null);
+  const [repeated, setRepeated] = useState(false);
 
   const webViewRef = useRef<WebView | null>(null);
   const seekBarAnimRef = useRef(new Animated.Value(0));
@@ -231,6 +243,21 @@ const App = () => {
     }),
   );
 
+  const onPressSetRepeatTime = () => {
+    if (repeatStartInSec === null) {
+      setRepeatStartInSec(currentTimeInSec);
+    } else if (repeatEndInSec === null) {
+      setRepeatEndInSec(currentTimeInSec);
+    } else {
+      setRepeatStartInSec(null);
+      setRepeatEndInSec(null);
+    }
+  };
+
+  const onPressRepeat = () => {
+    setRepeated(!repeated);
+  };
+
   useEffect(() => {
     if (isPlaying) {
       const id = setInterval(() => {
@@ -253,6 +280,14 @@ const App = () => {
       useNativeDriver: false,
     }).start();
   }, [currentTimeInSec]);
+
+  useEffect(() => {
+    if (repeated && repeatStartInSec !== null && repeatEndInSec !== null) {
+      if (currentTimeInSec > repeatEndInSec) {
+        webViewRef.current?.injectJavaScript(`player.seekTo(${repeatStartInSec}, true);`);
+      }
+    }
+  }, [currentTimeInSec, repeatEndInSec, repeatStartInSec, repeated]);
 
   return (
     <SafeAreaView style={styles.safearea}>
@@ -328,9 +363,14 @@ const App = () => {
             },
           ]}
         />
+        {repeatStartInSec && <View style={[styles.repeat, { left: (repeatStartInSec / durationInSec) * YT_WIDTH }]} />}
+        {repeatEndInSec && <View style={[styles.repeat, { left: (repeatEndInSec / durationInSec) * YT_WIDTH }]} />}
       </View>
       <Text style={styles.timerText}>{`${currentTimeText} / ${durationText}`}</Text>
       <View style={styles.controller}>
+        <TouchableOpacity onPress={onPressSetRepeatTime}>
+          <Icon name="data-array" size={28} color="#D9D9D9" />
+        </TouchableOpacity>
         {isPlaying ? (
           <TouchableOpacity
             style={styles.playButton}
@@ -350,6 +390,9 @@ const App = () => {
             <Icon name="play-circle" size={39.58} color="#00DDAB" />
           </TouchableOpacity>
         )}
+        <TouchableOpacity onPress={onPressRepeat}>
+          <Icon name="repeat" size={28} color={repeated ? '#00DDA8' : '#D9D9D9'} />
+        </TouchableOpacity>
       </View>
       <View style={styles.urlListContainer}>
         <TouchableOpacity
